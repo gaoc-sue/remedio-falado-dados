@@ -1,0 +1,52 @@
+name: Atualizar estoque dos postos
+
+# Todo dia às 05h17 (Recife): baixa o estoque das farmácias da Rede Municipal de Saúde
+# (Portal de Dados Abertos da Prefeitura do Recife, 8 distritos sanitários), junta com a rede
+# de unidades e publica estoque.json, que o app Remédio Falado baixa.
+on:
+  schedule:
+    - cron: "17 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar os 8 distritos
+        run: |
+          set -e
+          mkdir -p brutos
+          base="https://dados.recife.pe.gov.br/dataset/c68396ad-ad0f-4255-a57a-84c97054dd37/resource"
+          while read -r n rid; do
+            [ -z "$n" ] && continue
+            curl -fsSL --retry 3 --retry-delay 20 -m 120 -A "RemedioFalado/1.0 (dados abertos)" \
+              -o "brutos/medicamentos_distrito$n.csv" "$base/$rid/download/medicamentos_distrito$n.csv"
+            echo "distrito $n: $(wc -l < brutos/medicamentos_distrito$n.csv) linhas"
+          done <<'LISTA'
+          01 537f0b95-4eb7-4912-9d7c-32caf9fd68ac
+          02 30e87813-b5a3-4cbd-b35e-b09156f52698
+          03 832ae42d-0163-45e8-82c1-a4e00a5ec1b6
+          04 a4d419a8-4355-4ae9-b116-9cc35b914f50
+          05 77040c32-2a39-4416-ba93-5c7386b46dcb
+          06 ac869f94-a655-4388-871b-9957b0a642a4
+          07 97109f18-a189-4084-acaf-b3aff6e65d51
+          08 2e411ebc-0bef-4e03-ae34-2b792b5468c2
+          LISTA
+
+      - name: Gerar estoque.json
+        run: python3 scripts/gerar_estoque.py brutos/medicamentos_distrito*.csv
+
+      - name: Publicar
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add estoque.json pendentes.txt
+          git diff --cached --quiet && { echo "sem mudanças"; exit 0; }
+          git commit -m "Estoque de $(TZ=America/Recife date +%d/%m/%Y)"
+          git push
