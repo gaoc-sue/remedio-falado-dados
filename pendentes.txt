@@ -1,0 +1,7 @@
+Unidades do estoque sem par na rede (2026-10-14). Para incluir, adicione em dados/mapa_unidades.json:
+US 229 USF MAIS UR 10 (distrito 8) -> sugestão: nenhuma
+US 307 USF MAIS DR GUILHERME J ROBALINHO OLIVEIRA CAVALCANTI (distrito 6) -> sugestão: nenhuma
+US 338 USF MAIS JARDIM SAO PAULO (distrito 5) -> sugestão: Upinha Dia Jardim São Paulo
+US 442 USF MAIS SANTA LUZIA EMOCY KRAUSE (distrito 4) -> sugestão: Upinha Dia Santa Luzia Emocy Krause
+Us 154 Usf Rio Pajeu (distrito 8) -> sugestão: nenhuma
+Us 182 Upinha Usf Padre Jose Edwaldo Gomes (distrito 3) -> sugestão: nenhuma
