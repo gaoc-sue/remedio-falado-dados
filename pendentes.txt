@@ -1,4 +1,4 @@
-Unidades do estoque sem par na rede (2026-10-17). Para incluir, adicione em dados/mapa_unidades.json:
+Unidades do estoque sem par na rede (2026-10-18). Para incluir, adicione em dados/mapa_unidades.json:
 US 307 USF MAIS DR GUILHERME J ROBALINHO OLIVEIRA CAVALCANTI (distrito 6) -> sugestão: nenhuma
 Us 154 Usf Rio Pajeu (distrito 8) -> sugestão: nenhuma
 Us 182 Upinha Usf Padre Jose Edwaldo Gomes (distrito 3) -> sugestão: nenhuma
