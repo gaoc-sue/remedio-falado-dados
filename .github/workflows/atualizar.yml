@@ -1,33 +1,48 @@
 name: Atualizar estoque dos postos
 
-# Todo dia às 05h17 (Recife): baixa o estoque das farmácias da Rede Municipal de Saúde
-# (Portal de Dados Abertos da Prefeitura do Recife, 8 distritos sanitários), junta com a rede
-# de unidades e publica estoque.json, que o app Remédio Falado baixa.
+# Três tentativas por dia (05h17, 11h17 e 17h17 em Recife): baixa o estoque das farmácias da Rede
+# Municipal de Saúde (Portal de Dados Abertos da Prefeitura do Recife, 8 distritos sanitários), junta
+# com a rede de unidades e publica estoque.json, que o app Remédio Falado baixa.
+# Se o portal da prefeitura estiver fora do ar, o arquivo de ontem continua valendo e a tarefa tenta
+# de novo na próxima hora marcada. Só fica vermelha (e manda e-mail) se o estoque tiver mais de 2 dias.
 on:
   schedule:
     - cron: "17 8 * * *"
+    - cron: "17 14 * * *"
+    - cron: "17 20 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: estoque
+  cancel-in-progress: false
+
 jobs:
   atualizar:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - name: Baixar os 8 distritos
+        id: baixar
         run: |
-          set -e
           mkdir -p brutos
           base="https://dados.recife.pe.gov.br/dataset/c68396ad-ad0f-4255-a57a-84c97054dd37/resource"
+          falhas=0
           while read -r n rid; do
             [ -z "$n" ] && continue
-            curl -fsSL --retry 3 --retry-delay 20 -m 120 -A "RemedioFalado/1.0 (dados abertos)" \
-              -o "brutos/medicamentos_distrito$n.csv" "$base/$rid/download/medicamentos_distrito$n.csv"
-            echo "distrito $n: $(wc -l < brutos/medicamentos_distrito$n.csv) linhas"
+            if curl -fsSL --retry 4 --retry-all-errors --retry-delay 30 --retry-max-time 240 \
+                 --connect-timeout 30 -m 120 -A "RemedioFalado/1.0 (dados abertos)" \
+                 -o "brutos/medicamentos_distrito$n.csv" "$base/$rid/download/medicamentos_distrito$n.csv" \
+               && [ -s "brutos/medicamentos_distrito$n.csv" ]; then
+              echo "distrito $n: $(wc -l < brutos/medicamentos_distrito$n.csv) linhas"
+            else
+              echo "::warning::distrito $n: o portal da prefeitura não respondeu"
+              rm -f "brutos/medicamentos_distrito$n.csv"; falhas=$((falhas+1))
+            fi
           done <<'LISTA'
           01 537f0b95-4eb7-4912-9d7c-32caf9fd68ac
           02 30e87813-b5a3-4cbd-b35e-b09156f52698
@@ -38,11 +53,16 @@ jobs:
           07 97109f18-a189-4084-acaf-b3aff6e65d51
           08 2e411ebc-0bef-4e03-ae34-2b792b5468c2
           LISTA
+          echo "falhas=$falhas" >> "$GITHUB_OUTPUT"
 
+      # só publica com os 8 distritos: com um faltando, os postos dele sumiriam do app
       - name: Gerar estoque.json
+        id: gerar
+        if: steps.baixar.outputs.falhas == '0'
         run: python3 scripts/gerar_estoque.py brutos/medicamentos_distrito*.csv
 
       - name: Publicar
+        if: steps.baixar.outputs.falhas == '0' && steps.gerar.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -50,3 +70,21 @@ jobs:
           git diff --cached --quiet && { echo "sem mudanças"; exit 0; }
           git commit -m "Estoque de $(TZ=America/Recife date +%d/%m/%Y)"
           git push
+
+      - name: Conferir a idade do estoque publicado
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, datetime, sys
+          try:
+            d = datetime.date.fromisoformat(json.load(open('estoque.json'))['data_estoque'])
+          except Exception as e:
+            print('::error::não consegui ler estoque.json:', e); sys.exit(1)
+          hoje = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).date()
+          dias = (hoje - d).days
+          print(f'estoque publicado de {d} ({dias} dia(s))')
+          if dias > 2:
+            print(f'::error::o estoque tem {dias} dias: o portal da prefeitura está fora do ar há tempo demais'); sys.exit(1)
+          if dias > 0:
+            print(f'::warning::hoje não atualizou; o app continua com o estoque de {d}')
+          PY
