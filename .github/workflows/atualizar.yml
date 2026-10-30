@@ -1,0 +1,70 @@
+name: Atualizar estoque dos postos
+
+# Três tentativas por dia (05h17, 11h17 e 17h17 em Recife): baixa o estoque das farmácias da Rede
+# Municipal de Saúde (Portal de Dados Abertos da Prefeitura do Recife, 8 distritos sanitários), junta
+# com a rede de unidades e publica estoque.json, que o app Remédio Falado baixa.
+# O endereço dos arquivos é perguntado ao portal (API do CKAN) a cada vez, porque a Prefeitura troca os
+# arquivos todo dia. O download tem prazo de 20 minutos: se o portal não responder, a tarefa termina sozinha,
+# o arquivo anterior continua valendo e ela tenta de novo na próxima hora marcada.
+# A data publicada é a do portal (quando a Prefeitura atualizou), não a do download.
+# Só fica vermelha (e manda e-mail) se o estoque publicado tiver mais de 3 dias.
+# DESLIGADA no horário: o portal da Prefeitura não responde aos servidores do GitHub (fora do Brasil).
+# Desde 30/10/2026 o app consulta o estoque direto do celular; esta lista é só a reserva.
+# Para atualizar a reserva: baixe os 8 CSVs no portal e rode scripts/gerar_estoque.py no computador.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: estoque
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar os 8 distritos
+        id: baixar
+        timeout-minutes: 25
+        env:
+          PRAZO_MIN: "20"
+        run: python3 scripts/baixar.py brutos
+
+      # só publica com os 8 distritos: com um faltando, os postos dele sumiriam do app
+      - name: Gerar estoque.json
+        id: gerar
+        if: steps.baixar.outputs.falhas == '0'
+        run: python3 scripts/gerar_estoque.py brutos/medicamentos_distrito*.csv
+
+      - name: Publicar
+        if: steps.baixar.outputs.falhas == '0' && steps.gerar.outcome == 'success'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add estoque.json pendentes.txt
+          git diff --cached --quiet && { echo "sem mudanças"; exit 0; }
+          git commit -m "Estoque de $(TZ=America/Recife date +%d/%m/%Y)"
+          git push
+
+      - name: Conferir a idade do estoque publicado
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, datetime, sys
+          try:
+            d = datetime.date.fromisoformat(json.load(open('estoque.json'))['data_estoque'])
+          except Exception as e:
+            print('::error::não consegui ler estoque.json:', e); sys.exit(1)
+          hoje = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).date()
+          dias = (hoje - d).days
+          print(f'estoque publicado de {d} ({dias} dia(s))')
+          if dias > 3:
+            print(f'::error::o estoque tem {dias} dias: o portal da prefeitura está fora do ar há tempo demais'); sys.exit(1)
+          if dias > 0:
+            print(f'::warning::hoje não atualizou; o app continua com o estoque de {d}')
+          PY
