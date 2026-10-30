@@ -1,0 +1,58 @@
+{
+ "aviso": "Doses máximas copiadas do texto da bula do paciente oficial (Bulário da Anvisa). Conferir com farmacêutico antes de uso real. O app só avisa; não bloqueia nem indica dose.",
+ "conferido_por": null,
+ "doses": {
+  "losartana": {
+   "mg": 100,
+   "txt": "Essa dose pode ser aumentada para 100 mg uma vez ao dia.",
+   "registro": "100430911"
+  },
+  "anlodipino": {
+   "mg": 10,
+   "txt": "No tratamento da hipertensão e da angina, a dose inicial usual de besilato de anlodipino é de 5 mg 1 vez ao dia, podendo ser aumentada pelo seu médico para a dose máxima de 10 mg, dependendo da resposta individual do paciente.",
+   "registro": "102350536"
+  },
+  "valsartana": {
+   "mg": 320,
+   "txt": "A dose máxima de valsartana é de 320 mg.",
+   "registro": "100431333"
+  },
+  "paracetamol": {
+   "mg": 4000,
+   "dose_mg": 1000,
+   "txt": "A dose diária máxima recomendada de paracetamol é de 4000 mg (...) administrada em doses fracionadas, não excedendo 1000 mg/dose (...), em intervalos de 4 a 6 horas, em um período de 24 horas.",
+   "registro": "157211214"
+  },
+  "dipirona": {
+   "mg": 4000,
+   "dose_mg": 1000,
+   "txt": "Dipirona Monoidratada comprimidos 1 g: adultos e adolescentes acima de 15 anos: ½ a 1 comprimido até 4 vezes ao dia.",
+   "registro": "143810293"
+  },
+  "tramadol": {
+   "mg": 400,
+   "txt": "Não tome mais que 400 mg de cloridrato de tramadol por dia, exceto se seu médico instruir você a fazer isto.",
+   "registro": "186100004"
+  },
+  "zolpidem": {
+   "mg": 10,
+   "txt": "A dosagem não deve exceder 10 mg por dia.",
+   "registro": "104971576"
+  },
+  "eszopiclona": {
+   "mg": 3,
+   "txt": "A dose total de eszopiclona não deve exceder 3 mg, uma vez ao dia, antes de deitar-se para dormir.",
+   "registro": "155840709"
+  },
+  "levetiracetam": {
+   "mg": 3000,
+   "txt": "A dose máxima é de 1500 mg, duas vezes ao dia.",
+   "registro": "105730515"
+  },
+  "risperidona": {
+   "mg": 16,
+   "txt": "A segurança de doses superiores a 16 mg/dia não foi avaliada e, portanto, não devem ser usadas.",
+   "registro": "112360031"
+  }
+ }
+}

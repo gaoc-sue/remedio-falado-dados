@@ -1,0 +1,18 @@
+{
+  "appId": "br.com.remediofalado.app",
+  "appName": "BULA",
+  "webDir": "www",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto",
+    "minWebViewVersion": 60
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon",
+      "iconColor": "#1E4FD0"
+    }
+  },
+  "server": {
+    "errorPath": "webview-antiga.html"
+  }
+}

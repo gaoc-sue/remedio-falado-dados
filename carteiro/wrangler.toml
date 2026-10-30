@@ -1,0 +1,9 @@
+# Carteiro do BULA: acorda o outro celular na hora (Firebase Cloud Messaging), sem ver conteúdo.
+# Publicado sozinho pelo GitHub Actions (.github/workflows/carteiro.yml).
+name = "remedio-falado-carteiro"
+main = "carteiro.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[observability]
+enabled = false
