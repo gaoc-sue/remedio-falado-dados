@@ -4,11 +4,13 @@ Estoque diário dos remédios de pressão e diabetes nas farmácias da Rede Muni
 no formato que o app **Remédio Falado** (Squad 4 · CESAR School) usa.
 
 - `estoque.json`: postos com endereço, telefone, horário, localização e os remédios que tinham em estoque
-  no dia (`data_estoque` = dia em que o arquivo foi baixado; a Prefeitura não informa a hora do estoque).
+  no dia (`data_estoque` = dia em que a Prefeitura atualizou os arquivos no portal, `data_tipo: "prefeitura"`;
+  se o portal não informar, fica o dia do download, `data_tipo: "download"`).
 - `pendentes.txt`: unidades do estoque que ainda não foram ligadas a um endereço. Para incluir uma,
   adicione `"<nome da unidade no estoque>": "<nome_oficial em dados/rede.csv>"` em `dados/mapa_unidades.json`
   (use `null` para deixar de fora).
-- Atualização: todo dia às 05h17 pela tarefa em `.github/workflows/atualizar.yml`. Para rodar na hora:
+- Atualização: três vezes por dia (05h17, 11h17 e 17h17) pela tarefa em `.github/workflows/atualizar.yml`,
+  que usa `scripts/baixar.py` (pergunta ao portal onde estão os arquivos do dia e desiste em 20 minutos se ele não responder). Para rodar na hora:
   aba Actions → "Atualizar estoque dos postos" → Run workflow.
 
 ## Fontes e licença

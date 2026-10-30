@@ -172,11 +172,21 @@ def main(arquivos):
     if len(postos) < minimo:
         sys.exit(f'Só {len(postos)} postos (mínimo {minimo}): arquivo incompleto? estoque.json não foi alterado.')
     hoje = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-3))).date().isoformat()
+    # data do estoque: a que a Prefeitura informa no portal (scripts/baixar.py grava em brutos/data.txt);
+    # sem ela, fica a data do download, como antes
+    data_pref = ''
+    for arq in arquivos:
+        f = Path(arq).parent / 'data.txt'
+        if f.exists():
+            data_pref = f.read_text().strip()
+            break
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', data_pref or ''):
+        data_pref = ''
     saida = {
         'fonte': 'Prefeitura do Recife, Portal de Dados Abertos: "Estoque dos medicamentos nas farmácias '
                  'da Rede Municipal de Saúde" e "Rede de atenção à saúde no Recife". Licença ODbL.',
-        'data_estoque': hoje,
-        'data_tipo': 'download',
+        'data_estoque': data_pref or hoje,
+        'data_tipo': 'prefeitura' if data_pref else 'download',
         'postos': [dict(p, tem=sorted(p['tem'])) for _, p in sorted(postos.items())],
     }
     (RAIZ / 'estoque.json').write_text(json.dumps(saida, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
